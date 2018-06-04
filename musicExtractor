@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun May 27 18:11:02 2018
+
+@author: ozan
+"""
+
+import sys
+sys.path.append("/usr/local/lib/python3/dist-packages")
+import essentia 
+import essentia
+
+# as there are 2 operating modes in essentia which have the same algorithms,
+# these latter are dispatched into 2 submodules:
+import essentia.standard as es
+import essentia.streaming
+# we start by instantiating the audio loader:
+
+features, features_frames = es.MusicExtractor(lowlevelStats=['mean', 'stdev'], 
+                                              rhythmStats=['mean', 'stdev'], 
+                                              tonalStats=['mean', 'stdev'])('/home/ozan/Desktop/cd/ozan/TrainFiles/genres/blues/blues.00000.wav')
+
+# and then we actually perform the loading:
+print("Filename:", features['metadata.tags.file_name'])
+print("-"*80)
+print("Replay gain:", features['metadata.audio_properties.replay_gain'])
+print("EBU128 integrated loudness:", features['lowlevel.loudness_ebu128.integrated'])
+print("EBU128 loudness range:", features['lowlevel.loudness_ebu128.loudness_range'])
+print("-"*80)
+print("MFCC mean:", features['lowlevel.mfcc.mean'])
+print("-"*80)
+print("BPM:", features['rhythm.bpm'])
+print("Beat positions (sec.)", features['rhythm.beats_position'])
+print("-"*80)
+print("Key/scale estimation (using a profile specifically suited for electronic music):", 
+      features['tonal.key_edma.key'], features['tonal.key_edma.scale'])

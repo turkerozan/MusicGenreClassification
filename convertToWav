@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May 26 15:43:26 2018
+
+@author: ozan
+"""
+
+import sys
+import os
+import sox
+
+# Store the directory where all the audio files are saved
+genre_dirs = ['/home/ozan/Desktop/cd/ozan/TrainFiles/genres/blues','/home/ozan/Desktop/cd/ozan/TrainFiles/genres/classical','/home/ozan/Desktop/cd/ozan/TrainFiles/genres/country',
+'/home/ozan/Desktop/cd/ozan/TrainFiles/genres/disco','/home/ozan/Desktop/cd/ozan/TrainFiles/genres/hiphop','/home/ozan/Desktop/cd/ozan/TrainFiles/genres/jazz','/home/ozan/Desktop/cd/ozan/TrainFiles/genres/metal',
+'/home/ozan/Desktop/cd/ozan/TrainFiles/genres/pop','/home/ozan/Desktop/cd/ozan/TrainFiles/genres/reggae','/home/ozan/Desktop/cd/ozan/TrainFiles/genres/rock'
+]
+for genre_dir in genre_dirs:
+	# change directory to genre_dir
+	os.chdir(genre_dir)
+
+	# echo contents before altering
+	print('Contents of ' + genre_dir + ' before conversion: ')
+	os.system("ls")
+
+	# loop through each file in current dir
+	for file in os.listdir(genre_dir):
+		# SOX
+		os.system("sox " + str(file) + " " + str(file[:-3]) + ".wav")
+	
+	# delete .au from current dir
+	os.system("rm *.au")
+	# echo contents of current dir
+	print('After conversion:')
+	os.system("ls")
+	print('\n')
+
+print("Conversion complete. Check respective directories.")

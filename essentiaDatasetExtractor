@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May 26 18:34:11 2018
+
+@author: ozan
+"""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May 24 20:47:08 2018
+
+@author: ozan
+"""
+import sys
+sys.path.append("/usr/local/lib/python3/dist-packages")
+import essentia 
+import essentia
+import essentia.standard as es
+import librosa
+import numpy
+import pandas
+import os
+import sklearn
+import config
+
+
+def main():
+    samp_rate = config.CreateDataset.SAMPLING_RATE
+    frame_size = config.CreateDataset.FRAME_SIZE
+    hop_size = config.CreateDataset.HOP_SIZE
+    dataset_dir = config.CreateDataset.DATASET_DIRECTORY
+
+    sub_folders = get_subdirectories(dataset_dir)
+
+    labels = []
+    is_created = False
+
+    print("Extracting features from audios...")
+    for sub_folder in sub_folders:
+        print(".....Working in folder:", sub_folder)
+        sample_arrays = get_sample_arrays(dataset_dir, sub_folder, samp_rate)
+        for sample_array in sample_arrays:
+            row = extract_features(sample_array, samp_rate, frame_size, hop_size)
+            if not is_created:
+                dataset_numpy = numpy.array(row)
+                is_created = True
+            elif is_created:
+                dataset_numpy = numpy.vstack((dataset_numpy, row))
+
+            labels.append(sub_folder)
+
+    print("Normalizing the data...")
+    scaler = sklearn.preprocessing.MinMaxScaler(feature_range=(-1, 1))
+    dataset_numpy = scaler.fit_transform(dataset_numpy)
+
+    Feature_Names = ['Key','BPM','meanZCR', 'stdZCR', 'meanSpecCentroid', 'stdSpecCentroid', 'meanSpecContrast', 'stdSpecContrast',
+                     'meanSpecBandwidth', 'stdSpecBandwidth', 'meanSpecRollof', 'stdSpecRollof',
+                     'meanMFCC_1', 'stdMFCC_1', 'meanMFCC_2'
+                     ]
+    dataset_pandas = pandas.DataFrame(dataset_numpy, columns=Feature_Names)
+
+    dataset_pandas["genre"] = labels
+    dataset_pandas.to_csv("data_set4.csv", index=False)
+    print("Data set has been created and sent to the project folder!")
+
+def get_subdirectories(a_dir):
+    return [name for name in os.listdir(a_dir)
+            if os.path.isdir(os.path.join(a_dir, name))]
+
+
+def get_sample_arrays(dataset_dir, folder_name, samp_rate):
+    path_of_audios = librosa.util.find_files(dataset_dir + "/" + folder_name)
+    return path_of_audios
+
+
+def extract_features(path, sample_rate, frame_size, hop_size):
+    
+    features, features_frames = es.MusicExtractor(lowlevelStats=['mean', 'stdev'], 
+                                              rhythmStats=['mean', 'stdev'], 
+                                              tonalStats=['mean', 'stdev'])(path)
+    bpm = features['rhythm.bpm']
+    key = features['tonal.key_temperley.scale']
+    keyout = 0
+    if key == 'minor':
+        keyout = 0
+    else:
+        keyout = 1
+    
+    print(path + ' \n' )
+    print("BPM:", features['rhythm.bpm'])
+    print("Key:" + key + " out : " + str(keyout) )
+    return [
+        keyout,
+        bpm,
+        features['lowlevel.mfcc.mean'],
+    ]
+
+main()
